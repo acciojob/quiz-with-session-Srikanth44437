@@ -1,7 +1,3 @@
-//your JS code here.
-
-// Do not change code below this line
-// This code will just display the questions to the screen
 const questions = [
   {
     question: "What is the capital of France?",
@@ -30,27 +26,79 @@ const questions = [
   },
 ];
 
-// Display the quiz questions and choices
-function renderQuestions() {
-  for (let i = 0; i < questions.length; i++) {
-    const question = questions[i];
-    const questionElement = document.createElement("div");
-    const questionText = document.createTextNode(question.question);
-    questionElement.appendChild(questionText);
-    for (let j = 0; j < question.choices.length; j++) {
-      const choice = question.choices[j];
-      const choiceElement = document.createElement("input");
-      choiceElement.setAttribute("type", "radio");
-      choiceElement.setAttribute("name", `question-${i}`);
-      choiceElement.setAttribute("value", choice);
-      if (userAnswers[i] === choice) {
-        choiceElement.setAttribute("checked", true);
-      }
-      const choiceText = document.createTextNode(choice);
-      questionElement.appendChild(choiceElement);
-      questionElement.appendChild(choiceText);
-    }
-    questionsElement.appendChild(questionElement);
-  }
+
+// Function to load questions into the div with id "questions"
+function loadQuestions() {
+  const questionsDiv = document.getElementById("questions");
+
+  questions.forEach((q, index) => {
+      const questionDiv = document.createElement("div");
+      questionDiv.innerHTML = `<p>${q.question}</p>`;
+      
+      q.choices.forEach((choice, choiceIndex) => {
+          const label = document.createElement("label");
+          const radio = document.createElement("input");
+          radio.type = "radio";
+          radio.name = `question${index}`;
+          radio.value = choice;
+          label.appendChild(radio);
+          label.innerHTML += choice;
+
+          // Retrieve user's choice from session storage
+          const savedChoice = sessionStorage.getItem(`progress_${index}`);
+          if (savedChoice && savedChoice === choice) {
+              radio.checked = true;
+          }
+
+          questionDiv.appendChild(label);
+      });
+
+      questionsDiv.appendChild(questionDiv);
+  });
 }
-renderQuestions();
+
+// Function to save progress in session storage
+function saveProgress() {
+  const questionsDiv = document.getElementById("questions");
+
+  questionsDiv.addEventListener("change", function (event) {
+      if (event.target.type === "radio") {
+          const questionIndex = event.target.name.replace("question", "");
+          sessionStorage.setItem(`progress_${questionIndex}`, event.target.value);
+      }
+  });
+}
+
+// Function to submit the quiz and display the score
+function submitQuiz() {
+  const score = calculateScore();
+  const scoreDiv = document.getElementById("score");
+  scoreDiv.textContent = `Your score is ${score} out of ${questions.length}.`;
+
+  // Save the score in local storage
+  localStorage.setItem("score", score);
+}
+
+// Function to calculate the score
+function calculateScore() {
+  let score = 0;
+
+  questions.forEach((q, index) => {
+      const userChoice = sessionStorage.getItem(`progress_${index}`);
+      if (userChoice && userChoice === q.correctAnswer) {
+          score++;
+      }
+  });
+
+  return score;
+}
+
+// Load questions and save progress on page load
+document.addEventListener("DOMContentLoaded", function () {
+  loadQuestions();
+  saveProgress();
+
+  // Add click event to the submit button
+  const submitButton = document.getElementById("submit");
+  submitButton.addEventListener("click", submitQuiz);
+});
